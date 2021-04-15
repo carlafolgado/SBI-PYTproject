@@ -116,8 +116,8 @@ def SuperimposeStructures(object_list, complex, RMSD_threshold):
             sup.set_atoms(unfold_entities(ref_struct[0][core], 'A'), unfold_entities(structure[0][core], 'A'))
             sup.apply(structure[0])
 
-            RMSD = sup.rms
-
+            RMSD = float(sup.rms)
+            print(RMSD)
             # check for clashes before adding new chain to complex
             if RMSD < RMSD_threshold:
                 for chain in structure[0]:

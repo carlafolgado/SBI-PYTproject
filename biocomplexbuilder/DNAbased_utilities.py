@@ -117,7 +117,15 @@ def construct_by_PDB_id(info_dict):
 #Compare chain sequences
 def seq_comparison(seq1, seq2, threshold=0.999):
     """
-    Uses pariwise alignment to align a pair of sequences and 	returns True if percentage of identity is greater than the threshold, and False if it is not.
+    Takes two strings with DNA sequences and a identity threshold (0-1).
+    Uses pariwise alignment to align the sequence, giving a -0.5 penalty for gap opening and -0.1 for gap extension.
+    The default identity threshold is set to 0.999 to only identify identic regions on both sequences.
+    Returns True if identity is greater than the provided threshold, or False if not.
+    Arguments:
+        - seq1: string with a DNA sequence (can be previously obtained with extract_DNA_sequence() function).
+        - seq2: string with a DNA sequence (can be previously obtained with extract_DNA_sequence() function).
+        - threshold: int with identity threshold (0-1). Default is set to 0.999.
+    pair of sequences and 	returns True if percentage of identity is greater than the threshold, and False if it is not.
     """
     alignment = pairwise2.align.localxs(seq1, seq2, -0.5, -0.1)
 
@@ -132,7 +140,14 @@ def seq_comparison(seq1, seq2, threshold=0.999):
 
 def information_extraction(object_list):
     """
-    Get object list, construct dictonary with dict[Uniprot_id][PDB_id] = [list of objects]
+    Takes a PDB object list with ids of the form path/Uniprot_id.DNA.PDB_id (coming from the Parsed filenames).
+    Extracts the Uniprot id and PDB id information from the object id.
+    Returns a dictionary of dictionaries where outer keys are Uniprot ids, inner keys are PDB ids and the values are lists of all the objects that have the given Uniprot id and the PDB id.
+    The dictionary will have the form:
+    dict{ Uniprot id : {PDB id: [PDB objects],
+                        PDB id: [PDB objects]},
+                       {PDB id: [PDB objects]}
+        }
     """
     my_dict = {}
     for object in object_list:
@@ -147,7 +162,8 @@ def information_extraction(object_list):
 
 def stoichiometry_extraction(stoichiometry_path):
     """
-    Obtain the path to stechiometry file. Open it and parse. Return dictionary with dict[uniprot_id] = #appearances
+    Takes the path to the stoichiometry file and parses it.
+    Return a dictionary with the protein Uniprot id as keys and the number of appearances in the final complex as values.
     """
     my_dict = {}
     try:
@@ -167,8 +183,23 @@ def stoichiometry_extraction(stoichiometry_path):
 
 def Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, out_stoich_dict={}):
     """
-    Input total_DNA object, complex_dict with chains etc.
-    complex_dict[uniprot_id][PDB_id] = [object_list]
+    Superimposes different chains onto a DNA template based on the interaction of said chains with a given DNA region.
+    The function follows the stoichiometry provided, not adding the same chain more times than dicated by the input.
+    Returns a PDB Structure() object with the complex formed.
+    Arguments:
+        - total_DNA: PDB Structure() object with 2 chains of DNA to use as a template.
+        - complex dict: source of chains to be superimposed on to the template DNA. dictionary of the form
+            dict{Uniprot id: { PDB id: PDB object,
+                               PDB id: PDB object,},
+                             { PDB id: PDB object}
+                }
+        - RMSD_threshold: int with the RMSD threshold for the superimpositions. Those chain-DNA interaction where the DNA superimposes on the template DNA with a higher RMSD than the set threshold will not be added to the final complex.
+        - out_stoich_dict: dictionary containing the stoichiometry relations. Keys are Uniprot id and values the number of appearances in the final complex.
+        Default value is an empty dictionary, that by the behaviour of the function will allow 1 appearance of each kind of protein on the complex_dict.
+
+    From the dictionary, the PDB objects are accessed randomly and the chains with DNA are extracted and superimposed to the best region on the template DNA. Then the proteic chain is added to the complex if no clashes appear.
+    The process is repeated with each chain adding it if there are no clashes and the stoichiometry allows it, until all the stoichiometric conditions are fulfilled.
+    If the clashes do not allow to complete all the stoichiometric requirements, the function calls itself and restarts the complex until a complex that fulfills the conditions is obtained.
     """
 
     # fresh copy of total DNA to re-start the supre_complex
@@ -225,7 +256,7 @@ def Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, out_stoich_dict=
                             sup.set_atoms(atoms_DNA, atoms_compare)
                             sup.apply(object[0])
 
-                            RMSD = sup.rms
+                            RMSD = float(sup.rms)
 
                             if RMSD < RMSD_threshold:
 

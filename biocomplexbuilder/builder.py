@@ -43,7 +43,7 @@ if options.total_DNA_path:
         #    sys.stderr.write("Could not parse DNA file %s\n" %(options.total_DNA_path))
         #    sys.exit(1)
 
-RMSD_threshold = options.rmsd
+RMSD_threshold = float(options.rmsd)
 
 if options.verbose:
     num_pdb=0
