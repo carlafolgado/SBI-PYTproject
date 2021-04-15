@@ -15,12 +15,12 @@ def argparser():
                         required = True,
                         help = "Directory for output files")
 
-    parser.add_argument('-s', '--stechiometry',
-                        dest = "stec",
+    parser.add_argument('-s', '--stoichiometry',
+                        dest = "stoic",
                         action = "store",
                         required = False,
                         default = None,
-                        help = "File with stechiometry of the complex")
+                        help = "File with stoichiometry of the complex")
 
     parser.add_argument('-f', '--force',
                         dest = "force",

@@ -14,10 +14,10 @@ setup(name='biocomplexbuilder',
     author='Oriol Canal Pujol, Carla Folgado Salido and Arnau Llinàs Bertran',
     author_email='oriol.canal01@estudiant.upf.edu, carla.folgado01@estudiant.upf.edu, arnau.llinas01@estudiant.upf.edu',
     packages=['biocomplexbuilder'],
-    py_modules = ["arguments","builder","DNAbases_utilities","utilities" ],
+    py_modules = ['biocomplexbuilder/arguments','biocomplexbuilder/builder','biocomplexbuilder/DNAbased_utilities','biocomplexbuilder/utilities' ],
     classifiers=[
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License"
     ],
-    install_requires=['biopython'],
+    install_requires=['biopython', 'modeller'],
     include_package_data=True)

@@ -1,7 +1,7 @@
 import argparse, os, sys, re, copy, gzip
 from Bio.PDB import PDBParser, Superimposer, NeighborSearch, PDBIO, Structure
 from Bio.PDB.Selection import unfold_entities
-from biocomplexbuilder.arguments import *
+from arguments import *
 from Bio.PDB.Polypeptide import PPBuilder
 from modeller import *
 from modeller.scripts import complete_pdb

@@ -1,6 +1,6 @@
-from biocomplexbuilder.arguments import *
-from biocomplexbuilder.utilities import *
-from biocomplexbuilder.forDNA_functions import *
+from arguments import *
+from utilities import *
+from DNAbased_utilities import *
 
 ### PARSING AND CHECKING ARGUMENTS ###
 options = argparser()
@@ -81,6 +81,8 @@ if options.verbose:
     sys.stderr.write("\n## BUILDING MACROCOMPLEX\n")
 
 if options.total_DNA_path:
+    if options.verbose:
+        sys.stderr.write("\t# DNA set as template for building the complex\n")
     if not options.stoic:
         stoich_dict = {}
 
@@ -90,10 +92,12 @@ if options.total_DNA_path:
     scoring_tuples = []
     i = 0
     RMSD_threshold = 15
-    while i < str(options.models):
+    while i < int(options.models):
 
         current_complex = Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, stoich_dict)
         WritePDB(current_complex, "def_complex." + str(i) + ".pdb")
+        if options.verbose:
+            sys.stderr.write("\nComplex "+ str(i) + " built and saved as"+ "def_complex." + str(i) + ".pdb "+"in %s\n"%(options.outdir))
         score = DOPEscoring(current_complex)
         scoring_tuples.append((str(i), score))
 
@@ -106,6 +110,8 @@ if options.total_DNA_path:
         for score in scoring_tuples:
             fh.write("\t" + str(score[0]) + "\t\t\t\t%.3f\n" %(score[1]))
 
+    if options.verbose:
+        sys.stderr.write("\n New 'scores.dope' created in folder called %s" %(options.outdir))
 
 else:
     # No DNA to superimpose on
