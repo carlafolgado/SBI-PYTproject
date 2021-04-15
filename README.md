@@ -257,7 +257,7 @@ With this example it can be shown that the program allow to reconstruct the fina
 
 <br />
 
-#LIMITATIONS
+# LIMITATIONS
 
 The limitations when constructing complexes from protein-protein interaction withoud a DNA template:
 
@@ -272,7 +272,7 @@ The limitations when constructing complexes with DNA using a DNA template:
 * It needs the template DNA in order to reconstruct the whole model.
 <br />
 
-#REFERENCES
+# REFERENCES
 1- *Orozco, Modesto, A theoretical view of protein dynamics, Chemical Society Reviews. https://pubs.rsc.org/en/content/getauthorversionpdf/C3CS60474H.
 2- *V. Srinivasa Rao, K. Srinivas, G. N. Sujini, G. N. Sunand Kumar, "Protein-Protein Interaction Detection: Methods and Analysis", International Journal of Proteomics, vol. 2014, Article ID 147648, 12 pages, 2014. https://doi.org/10.1155/2014/147648*
 3- *Xiaoqing Peng, Jianxin Wang, Wei Peng, Fang-Xiang Wu, Yi Pan, Protein–protein interactions: detection, reliability assessment and applications, Briefings in Bioinformatics, Volume 18, Issue 5, September 2017, Pages 798–819, https://doi.org/10.1093/bib/bbw066*
