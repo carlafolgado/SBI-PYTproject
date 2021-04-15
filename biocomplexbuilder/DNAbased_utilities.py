@@ -5,6 +5,7 @@ import random
 
 def DNA_filter(object_list):
     """
+    Takes a list of PDB objects
     Gets object list, returns list with only those PDB objects containing DNA
     """
     filtered_list = []
@@ -20,7 +21,9 @@ def DNA_filter(object_list):
 
 def rename(object, complex):
     """
-    Input PDB object and complex. Returns object renamed so that it doesn't coincidence with chain names in complex.
+    Takes a PDB object and a complex.
+    Returns a copy of the PDB object so that no chain in the object has the same id as a chain in the complex.
+    Renaming is done checking non-used chain names in the complex, starting form ASCII character A.
     """
 
     # ASCII A-Za-z encoded on decimal 65 to 122
@@ -37,7 +40,8 @@ def rename(object, complex):
 
 def is_DNA(PDB_entity):
     """
-    Input a PDB_entity and returns True or False if the residue sequence is DNA or not
+    Input a PDB_entity of any level.
+    Returns True if the residue sequence is DNA or RNA. If not, return False.
     """
     # if it's atom get residue (parent)
     if PDB_entity.get_level() == "A":
@@ -54,7 +58,9 @@ def is_DNA(PDB_entity):
 
 def extract_DNA_sequence(PDB_object):
     """
-    Input PDB_object, checks if chain is DNA, return None or the sequence
+    Takes a PDB structure or model and checks if the contained chains are DNA or RNA.
+    Return a dictionary with the names of the chains that are DNA/RNA as keys and the sequence as value.
+    If there are no DNA/RNA chains, returns an empty dictoinary.
     """
     sequence = ""
     my_dict = {}
@@ -73,16 +79,31 @@ def extract_DNA_sequence(PDB_object):
 
     return my_dict
 
-def total_DNA_extraction(total_DNA_path, compressed):
+def total_DNA_extraction(total_DNA_path, compressed=False):
     """
-    Reads total DNA path, returns PDB object with total DNA
+    Takes the path to the total DNA file and parses it.
+    The file name must contain an underscore "_".
+    Returns a PDB Structure() instance.
+    Accepts compressed files with compressed=True.
     """
     return ParsePDB(total_DNA_path, compressed)
 
 def construct_by_PDB_id(info_dict):
     """
-    Takes dictionary with info_dict[uniprot_id][PDB_id] = [Objects]
-    Modifies dictionary in place to return formed PDB complex.
+    Takes a dictionary of dictionaries with the form:
+    dict{ Uniprot id : {PDB id: [PDB objects],
+                        PDB id: [PDB objects]},
+                       {PDB id: [PDB objects]}
+        }
+    The dictionary contains a list of objects that come from the same PDB structure containing the same protein from Uniprot id.
+    Overlaps all the objects under the same PDB id and Uniprot id to form the corresponding PDB complex.
+    Modifies the same dictionary in place so that the values of the inner dictoinary are now the PDB complex formed.
+    Final dictionary is of the form:
+    dict{ Uniprot id: { PDB id: PDB object,
+                        PDB id: PDB object,},
+                      { PDB id: PDB object}
+        }
+    Returns the final dictionary
     """
 
     for uniprot_id, value in info_dict.items():
@@ -151,7 +172,7 @@ def stoichiometry_extraction(stoichiometry_path):
         fh = open(stoichiometry_path, 'r')
         for line in fh:
             parts = line.strip().split(":")
-            my_dict.setdefault(parts[0], int(parts[1]))
+            my_dict.setdefault(parts[0].strip(), int(parts[1].strip()))
 
     except OSError:
         sys.stderr.write("Could not open stoichiometry file %s" %(stoichiometry_path))
