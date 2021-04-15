@@ -91,12 +91,13 @@ if options.total_DNA_path:
     complex_dict = construct_by_PDB_id(info_dict)
     scoring_tuples = []
     i = 0
-    #if options.rmds
     RMSD_threshold = 15
-    while i < str(options.models):
+    while i < int(options.models):
 
         current_complex = Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, stoich_dict)
         WritePDB(current_complex, "def_complex." + str(i) + ".pdb")
+        if options.verbose:
+            sys.stderr.write("\nComplex "+ str(i) + " built and saved as"+ "def_complex." + str(i) + ".pdb "+"in %s\n"%(options.outdir))
         score = DOPEscoring(current_complex)
         scoring_tuples.append((str(i), score))
 
@@ -109,6 +110,8 @@ if options.total_DNA_path:
         for score in scoring_tuples:
             fh.write("\t" + str(score[0]) + "\t\t\t\t%.3f\n" %(score[1]))
 
+    if options.verbose:
+        sys.stderr.write("\n New 'scores.dope' created in folder called %s" %(options.outdir))
 
 else:
     # No DNA to superimpose on
