@@ -97,6 +97,7 @@ The stoichometry of the chain have not arribe to 0.</p>
 
 # Installation
 <br />
+
 ### Prerequisites:
 - Python 3.0: `https://www.python.org/download/releases/3.0/`
 - Biopython package: `https://biopython.org/wiki/Download`
@@ -164,6 +165,7 @@ BioComplex Builder have different arguments which some of them are mandatory to 
 In this section, it will be shown some of the structures that the program has been able to reconstruct. These files can be found in the examples directory of the [github repository.](https://github.com/carlafolgado/SBIPYTproject)
 
 <br />
+
 ## Example 1: 1GZX
 
 
@@ -188,6 +190,7 @@ If we compare the model constructed and the reference structure:
 
 It can be observed that the model complex (red) is reconstructed perfectly with an RMSD of 0,000Å. For this reason the reference structure can't be seen because there is a completely overlap between structures. It can be observed that there are different prostetic groups from the reference structure that can't be modeled by the program. 
 <br />
+
 ## Example 2: 5FJ8
 
 The reference structure of the first example can be found in pdb with the code [5FJ8](https://www.rcsb.org/structure/5FJ8). It is a RNA polymerase III elongation complex from *Saccharomyces cerevisiae* which is formed by many different chains and RNA strand is part of the complex.
@@ -208,6 +211,7 @@ In this image we can see the complex constructed by the program in purple and th
 The RMSD between the reconstructed complex and the reference PDB file is 0.000 Å. For this reason, both models are completely equal and consequently the chains overlap and we can't see the reference structure when there is overlapping regions.
 
 <br />
+
 ## Example 3: 2O61
 
 The reference structure of the first example can be found in pdb with the code [2O61](https://www.rcsb.org/structure/2O61). It is a macrocomplex formed by different complexes: NFkB, IRF7, IRF3 and interferon-b enhancer. However, in this PDB it can't be found the zinc fingers that can be found as interacting chains in some PDB pairing interactions.
@@ -238,6 +242,7 @@ First of all we can see that the program have been able to reconstruct the final
 
 Comparing the model given stociometry and without giving it, we can see that the model with stociometry (yellow) have 3 chains more of the Q14653 complex. So, we can see that the program is able to construct different models using a DNA template  even if it is used a stociometry file or not. 
 <br />
+
 ## Example 4: 3KUY
 
 The reference structure of the first example can be found in pdb with the code [3KUY](https://www.rcsb.org/structure/3KUY).
@@ -251,6 +256,7 @@ python builder.py -i examples/3KUY/ -o result/ -v -f
 With this example it can be shown that the program allow to reconstruct the final complex. It have been able to reconstruct the DNA complex but not using the DNA as template, it used the pairing interactions of protein chains to reconstruct the final complex and consequently the final position of the DNA have been reconstructed correctly.
 
 <br />
+
 #LIMITATIONS
 
 The limitations when constructing complexes from protein-protein interaction withoud a DNA template:
@@ -265,6 +271,7 @@ The limitations when constructing complexes with DNA using a DNA template:
 
 * It needs the template DNA in order to reconstruct the whole model.
 <br />
+
 #REFERENCES
 1- *Orozco, Modesto, A theoretical view of protein dynamics, Chemical Society Reviews. https://pubs.rsc.org/en/content/getauthorversionpdf/C3CS60474H.
 2- *V. Srinivasa Rao, K. Srinivas, G. N. Sujini, G. N. Sunand Kumar, "Protein-Protein Interaction Detection: Methods and Analysis", International Journal of Proteomics, vol. 2014, Article ID 147648, 12 pages, 2014. https://doi.org/10.1155/2014/147648*
