@@ -1,6 +1,6 @@
 from biocomplexbuilder.arguments import *
 from biocomplexbuilder.utilities import *
-from biocomplexbuilder.forDNA_functions import *
+from biocomplexbuilder.DNAbased_utilities import *
 
 ### PARSING AND CHECKING ARGUMENTS ###
 options = argparser()
