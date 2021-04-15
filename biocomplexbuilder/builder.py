@@ -1,6 +1,6 @@
-from biocomplexbuilder.arguments import *
-from biocomplexbuilder.utilities import *
-from biocomplexbuilder.DNAbased_utilities import *
+from arguments import *
+from utilities import *
+from DNAbased_utilities import *
 
 ### PARSING AND CHECKING ARGUMENTS ###
 options = argparser()
@@ -81,6 +81,8 @@ if options.verbose:
     sys.stderr.write("\n## BUILDING MACROCOMPLEX\n")
 
 if options.total_DNA_path:
+    if options.verbose:
+        sys.stderr.write("\t# DNA set as template for building the complex\n")
     if not options.stoic:
         stoich_dict = {}
 
@@ -89,6 +91,7 @@ if options.total_DNA_path:
     complex_dict = construct_by_PDB_id(info_dict)
     scoring_tuples = []
     i = 0
+    #if options.rmds
     RMSD_threshold = 15
     while i < str(options.models):
 

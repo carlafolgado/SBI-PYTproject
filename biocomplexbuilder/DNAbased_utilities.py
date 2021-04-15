@@ -1,6 +1,6 @@
 from Bio import pairwise2
 import copy
-from biocomplexbuilder.utilities import *
+from utilities import *
 import random
 
 def DNA_filter(object_list):
