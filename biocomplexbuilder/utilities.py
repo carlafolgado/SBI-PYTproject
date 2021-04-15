@@ -1,9 +1,10 @@
 import argparse, os, sys, re, copy, gzip
 from Bio.PDB import PDBParser, Superimposer, NeighborSearch, PDBIO, Structure
 from Bio.PDB.Selection import unfold_entities
-from .arguments import *
+from biocomplexbuilder.arguments import *
 from Bio.PDB.Polypeptide import PPBuilder
-from .DNAbased_utilities import *
+from modeller import *
+from modeller.scripts import complete_pdb
 
 options=argparser()
 
@@ -11,28 +12,29 @@ def ParsePDB(file, compressed):
     """
     Takes a PDB file and parses all the structures returning instances of PDB Structure() objects.
     """
-
-    name = file.split('.')[0]
+    if options.total_DNA_path:
+        name = file.split('_')[0]
+    else:
+        name = file.split('.')[0] ###!!!
 
     # If the files are compressed, open it with gzip and pass the filehandle to Bio.PDB.PDBParser
     if compressed:
         file = gzip.open(file, "rt")
     return PDBParser(QUIET=True).get_structure(name, file)
 
-
 def FindCoreChain(object_list):
     """
     Takes a list of PDB objects and returns the name of the chain appearing more times in the binary interactions.
     It is assumed the objects belong to the same PDB structure.
     """
-    dict = {}
+    my_dict = {}
     # Finds the times each chain appears in the list of objects
     for pdb in object_list:
         for chain in pdb.get_chains():
-            dict[chain.get_id()] = dict.setdefault(chain.get_id(), 0) + 1
+            my_dict[chain.get_id()] = my_dict.setdefault(chain.get_id(), 0) + 1
 
     # find key with the most appearances
-    return sorted(dict, key=dict.get, reverse=True)
+    return max(my_dict, key=my_dict.get)
 
 def CheckClashes(structure, chain):
     """
@@ -69,7 +71,7 @@ def WritePDB(structure, name):
     # declare PDBIO object
     io = PDBIO()
     io.set_structure(structure)
-    io.save(options.outdir+name)
+    io.save(os.path.join(options.outdir, name))
     return
 
 def SuperimposeStructures(object_list, complex, RMSD_threshold):
@@ -77,61 +79,43 @@ def SuperimposeStructures(object_list, complex, RMSD_threshold):
     Takes a list containing PDB structures and returns a structure object with the correct structures superimposed.
     """
     # Get core chain to start reconstruction
-    possible_cores = FindCoreChain(object_list)
-    core = possible_cores[0]
-    print(core)
-
-    if len(list(complex.get_chains())):
-        print(list(complex.get_chains()))
-        while core not in [chain.get_id() for chain in list(complex.get_chains())]:
-            possible_cores.remove(core)
-            try:
-                core = possible_cores[0]
-            except IndexError:
-                sys.stderr.write("!!!! Chain names not compatible\n")
-                exit(1)
-            print(possible_cores[0])
-
+    core = FindCoreChain(object_list)
     if options.verbose:
         sys.stderr.write("Chain defined as core to superimpose: %s\n" %(core))
-
+        sys.stderr.write("Added to the final complex:\n")
 
     # Declare Superimpose object
     sup = Superimposer()
     ref_struct = None
 
     for structure in list(object_list):
-        #print(structure)
+
         # select the first structure with the core chain to be the reference
         try:
             if core in structure[0] and not ref_struct:
-                #print("ref_struct")
                 ref_struct = copy.deepcopy(structure)
                 complex.add(ref_struct[0])
-                print(f"Removing {structure}")
-                object_list.remove(structure) ##
-                continue ##
-                #print(complex)
 
         except:
-            #print("Hola")
             pass
-        # if the structure contains the core chain, superimpose that to the ref structure set above
+
+        # if the structure contains the core chain, superimpose that to the chain with same name in ref structure set before
         if core in structure[0] and (structure is not ref_struct):
 
-            sup.set_atoms(list(ref_struct[0][core].get_atoms()),list(structure[0][core].get_atoms()))
+            sup.set_atoms(unfold_entities(ref_struct[0][core], 'A'), unfold_entities(structure[0][core], 'A'))
             sup.apply(structure[0])
 
             RMSD = sup.rms
 
+            # check for clashes before adding new chain to complex
             if RMSD < RMSD_threshold:
                 for chain in structure[0]:
-                    #print(chain)
-                    if chain.id != core:
-                        # check for clashes before adding new chain to complex
+
+                    if chain.get_id() != core:
+
                         if not CheckClashes(complex, chain):
-                            #print("clashes")
                             chain_copy = copy.deepcopy(chain)
+
                             N = 65
                             while chain_copy.get_id() in [a.get_id() for a in complex.get_chains()]:
                                 try:
@@ -142,19 +126,16 @@ def SuperimposeStructures(object_list, complex, RMSD_threshold):
                             complex[0].add(chain_copy)
 
                             if options.verbose:
-                                sys.stderr.write("Added to the final complex:\n")
                                 sys.stderr.write("\tChain %s\n" %(chain.id))
 
-                print(f"Removing {structure}")
+
                 object_list.remove(structure)
 
-    return (object_list, complex, RMSD_threshold) ##
-
-
+    return (complex, object_list)
 
 def complex_builder(object_list,RMSD_threshold, complex=complex ):
 
-    object_list, complex, RMSD_threshold = SuperimposeStructures(object_list, complex, RMSD_threshold)
+    complex, object_list = SuperimposeStructures(object_list, complex, RMSD_threshold)
 
     if len(object_list):
         return complex_builder(object_list,RMSD_threshold,complex)
@@ -179,22 +160,9 @@ def DOPEscoring(complex):
     env.libs.topology.read('${LIB}/top_heav.lib')
     env.libs.parameters.read('${LIB}/par.lib')
     mdl = Model(env)
-    mdl.read(options.outdir + "temp_model.pdb")
-    # os.remove("temp_model.pdb")
+    mdl.read(os.path.join(options.outdir, "temp_model.pdb"))
+    os.remove(os.path.join(options.outdir, "temp_model.pdb"))
     return Selection(mdl).assess_dope()
-
-
-def EnergyScoring(complex):
-
-    WritePDB(complex, "temp_model.pdb")
-    log.none()
-    env = Environ()
-    env.libs.topology.read('${LIB}/top_heav.lib')
-    env.libs.parameters.read('${LIB}/par.lib')
-    mdl = complete_pdb(env, "test/complex.pdb", transfer_res_num=True)
-    (molpdf, terms) = Selection(mdl).energy(edat=EnergyData(dynamic_sphere=True))
-    return molpdf, terms
-
 
 def data_extraction(object_list, threshold = 0.90):
     """
@@ -209,7 +177,6 @@ def data_extraction(object_list, threshold = 0.90):
     big_dictionary = {}
 
     for object in object_list:
-#        model = PDBParser(QUIET = True).get_structure(pdb_file.split(".")[0], pdb_file)[0]
 
         for chain in object.get_chains():
             pdb_seqs = PPBuilder().build_peptides(chain)
@@ -238,9 +205,10 @@ def data_extraction(object_list, threshold = 0.90):
         for compare_item, compare_seq in big_dictionary.items():
             print(compare_item[1])
             if type(compare_seq) is not int:
-                alignment = seq_comparison(seq, compare_seq, threshold=0.95)
+                alignment = seq_comparison(seq, compare_seq, threshold=0.99)
                 if alignment:
                     big_dictionary[compare_item] = i
+                    print(item, compare_item)
                     print(alignment)
                 else:
                     print("not aligned")
@@ -248,7 +216,7 @@ def data_extraction(object_list, threshold = 0.90):
         big_dictionary[item] = i
         i += 1
         print(i)
-    print(big_dictionary)
+
 
     for item, seq in big_dictionary.items():
 
@@ -259,41 +227,5 @@ def data_extraction(object_list, threshold = 0.90):
             # in the cases two chains are equal in the same object, you can't rename them the same
             # instead we go for the lowercase version of the later (if it's homotrimer in the same PDB file the program breaks)
             item[0][0][item[1]].id = chr(seq+97)
-
+    print(big_dictionary)
     return
-
-def information_extraction(object_list):
-    """
-    Get object list, construct dictonary with dict[Uniprot_id][PDB_id] = [list of objects]
-    """
-    my_dict = {}
-    for object in object_list:
-        print(object.id)
-        namefile = object.id.split("/")[-1]
-        uniprot_id = namefile.split(".")[0]
-        PDB_id = namefile.split(".")[2]
-        object.id = uniprot_id + "." + PDB_id
-        my_dict.setdefault(uniprot_id, {})
-        my_dict[uniprot_id].setdefault(PDB_id, []).append(object)
-
-    return my_dict
-
-def stoichiometry_extraction(stoichiometry_path):
-    """
-    Obtain the path to stechiometry file. Open it and parse. Return dictionary with dict[uniprot_id] = #appearances
-    """
-    my_dict = {}
-    try:
-        fh = open(stoichiometry_path, 'r')
-        for line in fh:
-            parts = line.strip().split(":")
-            my_dict.setdefault(parts[0], parts[1])
-
-    except OSError:
-        sys.stderr.write("Could not open stoichiometry file %s" %(stoichiometry_path))
-        sys.exit(1)
-    finally:
-        if fh:
-            fh.close
-
-    return my_dic
