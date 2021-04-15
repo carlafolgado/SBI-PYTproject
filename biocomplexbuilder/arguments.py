@@ -40,7 +40,7 @@ def argparser():
                         dest="rmsd",
                         action="store",
                         required=False,
-                        default=None,
+                        default=0.5,
                         help="Set rmsd threshold for chain superposition. Default value at 0.5")
 
     parser.add_argument('--dna',

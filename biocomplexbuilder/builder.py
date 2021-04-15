@@ -19,9 +19,10 @@ if os.path.isdir(options.outdir):
 else:
     # create output directory if it doesn't exist
     try:
-        os.mkdir(options.outdir)
-    except OSError:
-        sys.stderr.write("Creation of the directory %s failed\n" % path)
+        os.mkdir(os.path.join(".", options.outdir))
+    except OSError as e:
+        sys.stderr.write("Creation of the directory %s failed.\nAvoid creating subfolders or check permissions.\n" % options.outdir)
+        sys.exit(1)
 
 # finding if files in indir are compressed or not
 compressed = False
@@ -66,7 +67,7 @@ for file in os.listdir(options.indir):
 
     PDB_objects.append(ParsePDB(filename, compressed))
     if options.verbose:
-        sys.stderr.write("\t%s transformed to PDB object\n" %(file))
+        sys.stderr.write("\t%s transformed to PDB object\r" %(file))
 ### ###
 
 if options.verbose:
@@ -97,7 +98,7 @@ if options.total_DNA_path:
         current_complex = Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, stoich_dict)
         WritePDB(current_complex, "def_complex." + str(i) + ".pdb")
         if options.verbose:
-            sys.stderr.write("\nComplex "+ str(i) + " built and saved as"+ "def_complex." + str(i) + ".pdb "+"in %s\n"%(options.outdir))
+            sys.stderr.write("\nComplex "+ str(i) + " built and saved as "+ "def_complex." + str(i) + ".pdb "+"in %s\n"%(options.outdir))
         score = DOPEscoring(current_complex)
         scoring_tuples.append((str(i), score))
 
@@ -111,7 +112,7 @@ if options.total_DNA_path:
             fh.write("\t" + str(score[0]) + "\t\t\t\t%.3f\n" %(score[1]))
 
     if options.verbose:
-        sys.stderr.write("\n New 'scores.dope' created in folder called %s" %(options.outdir))
+        sys.stderr.write("\n New 'scores.dope' created in folder called %s\n" %(options.outdir))
 
 else:
     # No DNA to superimpose on

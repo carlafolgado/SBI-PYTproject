@@ -3,22 +3,6 @@ import copy
 from utilities import *
 import random
 
-def DNA_filter(object_list):
-    """
-    Takes a list of PDB objects
-    Gets object list, returns list with only those PDB objects containing DNA
-    """
-    filtered_list = []
-    for struct in object_list:
-        for chain in struct[0]:
-            for res in chain:
-                if len(res.get_resname().strip()) == 2:
-                    # is DNA
-                    filtered_list.append(chain)
-                break
-
-    return
-
 def rename(object, complex):
     """
     Takes a PDB object and a complex.
@@ -103,7 +87,7 @@ def construct_by_PDB_id(info_dict):
                         PDB id: PDB object,},
                       { PDB id: PDB object}
         }
-    Returns the final dictionary
+    Returns the modified dictionary.
     """
 
     for uniprot_id, value in info_dict.items():
@@ -127,7 +111,6 @@ def construct_by_PDB_id(info_dict):
 
 
             info_dict[uniprot_id][pdb_id] = complex
-            WritePDB(complex, complex.id + ".pdb")
 
     return info_dict
 
@@ -153,7 +136,6 @@ def information_extraction(object_list):
     """
     my_dict = {}
     for object in object_list:
-        print(object.id)
         namefile = object.id.split("/")[-1]
         uniprot_id = namefile.split(".")[0]
         PDB_id = namefile.split(".")[2]
@@ -243,7 +225,6 @@ def Superimpose_on_DNA(total_DNA, complex_dict, RMSD_threshold, out_stoich_dict=
                             sup.set_atoms(atoms_DNA, atoms_compare)
                             sup.apply(object[0])
 
-                            WritePDB(object, "provant.pdb")
                             RMSD = sup.rms
 
                             if RMSD < RMSD_threshold:

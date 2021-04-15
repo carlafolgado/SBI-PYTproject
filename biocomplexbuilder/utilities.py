@@ -123,20 +123,28 @@ def SuperimposeStructures(object_list, complex, RMSD_threshold):
                 for chain in structure[0]:
 
                     if chain.get_id() != core:
+                        if not CheckClashes(complex, chain):
+                            chain_copy = copy.deepcopy(chain)
 
-                        for renamed_chain in rename(object, super_complex).get_chains():
-                            if not CheckClashes(complex, chain):
-                                complex[0].add(chain_copy)
+                            N = 65
+                            while chain_copy.get_id() in [a.get_id() for a in complex.get_chains()]:
+                                try:
+                                    chain_copy.id = chr(N)
+                                except ValueError:
+                                    pass
+                                N += 1
 
-                                if options.verbose:
-                                    sys.stderr.write("\tChain %s\n" %(chain.id))
+                            complex[0].add(chain_copy)
+
+                            if options.verbose:
+                                sys.stderr.write("\tChain %s\n" %(chain.id))
 
 
                 object_list.remove(structure)
 
     return (complex, object_list)
 
-def complex_builder(object_list,RMSD_threshold, complex=complex ):
+def complex_builder(object_list, RMSD_threshold, complex=complex ):
     """
     Takes an object_list and a complex and calls SuperimposeStructures to add the superimposable chains from objects in object_list to the complex.
     The function calls itself recursively until no more objects remain in object_list (which will be removed upon addition to the complex by the SuperimposeStructures function).
@@ -178,69 +186,3 @@ def DOPEscoring(complex):
     mdl.read(os.path.join(options.outdir, "temp_model.pdb"))
     os.remove(os.path.join(options.outdir, "temp_model.pdb"))
     return int(Selection(mdl).assess_dope())
-
-def data_extraction(object_list, threshold = 0.90):
-    """
-    Takes as input a list of pdb files and a fasta file
-    Returns a dictionary of dictionaries. The primary key is the model, the secondary
-    key is the chain_id in said model and the value is the fasta_id of said chain.
-    This function finds sequences by pairwise sequence alignment. If a pdb chain
-    aligns with 0.95 (by default) identity with a fasta sequence, it is given the fasta identifier.
-    If an aminoacid sequence is fragmented because of discontinuity or some other reason, the
-    function puts it together.
-    """
-    big_dictionary = {}
-
-    for object in object_list:
-
-        for chain in object.get_chains():
-            pdb_seqs = PPBuilder().build_peptides(chain)
-
-            # if it's a DNA sequence, list will be empty
-            if len(pdb_seqs)>1:
-                pp_seq = "".join(list([str(pp.get_sequence()) for pp in pdb_seqs]))
-
-            elif len(pdb_seqs) == 1:
-                pp_seq = pdb_seqs[0].get_sequence()
-
-            else:
-                #use our own function to extract the DNA sequence
-                pp_seq = extract_DNA_sequence(object)[chain.get_id()]
-            print(pp_seq)
-
-            big_dictionary[(object,chain.get_id())] = pp_seq
-
-    i = 0
-    for item, seq in big_dictionary.items():
-
-        if type(seq) is int:
-            continue
-
-        print(item[1])
-        for compare_item, compare_seq in big_dictionary.items():
-            print(compare_item[1])
-            if type(compare_seq) is not int:
-                alignment = seq_comparison(seq, compare_seq, threshold=0.99)
-                if alignment:
-                    big_dictionary[compare_item] = i
-                    print(item, compare_item)
-                    print(alignment)
-                else:
-                    print("not aligned")
-
-        big_dictionary[item] = i
-        i += 1
-        print(i)
-
-
-    for item, seq in big_dictionary.items():
-
-        #item[0] is object, [0] for the model, item[1] for the chain
-        try:
-            item[0][0][item[1]].id = chr(seq+65)
-        except ValueError:
-            # in the cases two chains are equal in the same object, you can't rename them the same
-            # instead we go for the lowercase version of the later (if it's homotrimer in the same PDB file the program breaks)
-            item[0][0][item[1]].id = chr(seq+97)
-    print(big_dictionary)
-    return
