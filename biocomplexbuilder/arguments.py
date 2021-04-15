@@ -36,14 +36,14 @@ def argparser():
                         default = False,
                         help = "Display verbose progression log of the program")
 
-    parser.add_argument('--rmsd',
+    parser.add_argument('-r','--rmsd',
                         dest="rmsd",
                         action="store",
                         required=False,
                         default=0.5,
                         help="Set rmsd threshold for chain superposition. Default value at 0.5")
 
-    parser.add_argument('--dna',
+    parser.add_argument('-d','--dna',
                         dest="total_DNA_path",
                         action="store",
                         required = False,

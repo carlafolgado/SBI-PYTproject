@@ -2,17 +2,33 @@ from .arguments import *
 from .utilities import *
 from .DNAbased_utilities import *
 
-
+### PARSING AND CHECKING ARGUMENTS ###
 options = argparser()
 
 # checking if indir is a directory
 if not os.path.isdir(options.indir):
     sys.stderr.write(options.indir + " is not a directory")
 
+# adjusting indir name to add "/" if input was only the folder name
+if not options.indir[-1] == "/":
+    # indir not ends with /
+    options.indir += "/"
+
 # checking if force is false and output directory already exists. If so, stop program
-if not options.force and os.path.isdir(options.outdir):
-    sys.stderr.write("Output directory already exists\n")
-    sys.exit(1)
+if not options.outdir[-1] == "/":
+    options.outdir += "/"
+
+if os.path.isdir(options.outdir):
+    if not options.force:
+        sys.stderr.write("Output directory already exists\n")
+        sys.exit(1)
+else:
+    # create output directory if it doesn't exist
+    try:
+        os.mkdir(options.outdir)
+        print(options.outdir)
+    except OSError:
+        sys.stderr.write("Creation of the directory %s failed\n" % path)
 
 # finding if files in indir are compressed or not
 compressed = False
@@ -21,26 +37,38 @@ for file in os.listdir(options.indir):
         compressed = True # if one file is compressed, assume all are compressed
 
 RMSD_threshold = options.rmsd
+
 if options.verbose:
     num_pdb=0
     for file in os.listdir(options.indir):
-        num_pdb +=1
+        if os.path.isfile(options.indir + file):
+            num_pdb +=1
 
     sys.stderr.write("\n%s PDB found in %s\n\n" %(num_pdb, options.indir))
 
+### ###
+
+### PARSING PDB OBJECTS ###
 PDB_objects = []
 
-if options.verbose:
-    sys.stderr.write("\t\t####################\n")
-    sys.stderr.write("\n\t\tMACROCOMPLEX BUILDER\n\n")
-    sys.stderr.write("\t\t####################\n\n")
-    sys.stderr.write("## Creating structure object from PDB files...\n")
 for file in os.listdir(options.indir):
-    filename = str(options.indir) +"/"+ str(file)
-    #print(filename)
+    filename = str(options.indir) + str(file) # "/" is added before in this script
+
+    # skip folders located on the input directory
+    if os.path.isdir(filename):
+        continue
+
     PDB_objects.append(ParsePDB(filename, compressed))
     if options.verbose:
         sys.stderr.write("\t%s transformed to PDB object\n" %(file))
+### ###
+
+if options.verbose:
+    sys.stderr.write("\n\t\t####################\n")
+    sys.stderr.write("\n\t\tMACROCOMPLEX BUILDER\n\n")
+    sys.stderr.write("\t\t####################\n\n")
+    sys.stderr.write("## Creating structure object from PDB files...\n")
+
 
 
 # Create empty complex
@@ -48,7 +76,7 @@ complex = Structure.Structure(id = "complex")
 if options.verbose:
     sys.stderr.write("\n## BUILDING MACROCOMPLEX\n")
 
-data_extraction(PDB_objects)
+#data_extraction(PDB_objects)
 #complex_builder(PDB_objects,RMSD_threshold, complex)
 
 #print(DOPEscoring(complex))
@@ -229,4 +257,4 @@ def random():
 
     WritePDB(super_complex, "super_mega_complex2.pdb")
     return
-random()
+#random()

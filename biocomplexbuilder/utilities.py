@@ -1,5 +1,4 @@
 import argparse, os, sys, re, copy, gzip
-import Bio
 from Bio.PDB import PDBParser, Superimposer, NeighborSearch, PDBIO, Structure
 from Bio.PDB.Selection import unfold_entities
 from .arguments import *
@@ -263,30 +262,38 @@ def data_extraction(object_list, threshold = 0.90):
 
     return
 
-#            big_dict[1][1] vs todos --> si = cambiar pp_seq por numero
-#            big_dict[2][1] vs todos los que queden --> si = cambiar pp_seq por numero
+def information_extraction(object_list):
+    """
+    Get object list, construct dictonary with dict[Uniprot_id][PDB_id] = [list of objects]
+    """
+    my_dict = {}
+    for object in object_list:
+        print(object.id)
+        namefile = object.id.split("/")[-1]
+        uniprot_id = namefile.split(".")[0]
+        PDB_id = namefile.split(".")[2]
+        object.id = uniprot_id + "." + PDB_id
+        my_dict.setdefault(uniprot_id, {})
+        my_dict[uniprot_id].setdefault(PDB_id, []).append(object)
 
+    return my_dict
 
+def stoichiometry_extraction(stoichiometry_path):
+    """
+    Obtain the path to stechiometry file. Open it and parse. Return dictionary with dict[uniprot_id] = #appearances
+    """
+    my_dict = {}
+    try:
+        fh = open(stoichiometry_path, 'r')
+        for line in fh:
+            parts = line.strip().split(":")
+            my_dict.setdefault(parts[0], parts[1])
 
+    except OSError:
+        sys.stderr.write("Could not open stoichiometry file %s" %(stoichiometry_path))
+        sys.exit(1)
+    finally:
+        if fh:
+            fh.close
 
-    #         #for seq_record in SeqIO.parse(fasta_file,"fasta"):
-    #         #    fasta_seq = seq_record.seq
-    #         #    fasta_id = seq_record.id
-    #             if fasta_id not in fasta_ids: fasta_ids.append(fasta_id)
-    #             score = pairwise2.align.globalxx(fasta_seq,pp_seq, score_only = True)
-    #             normalized_score = score/len(max([fasta_seq,pp_seq]))
-    #             if (normalized_score >= threshold and abs(len(fasta_seq)-len(pp_seq))<=40):
-    #                 big_dictionary[model][chain.get_id()] = fasta_id
-    #                 break
-    #
-    # values = []
-    # tag=0
-    # for lista in [list(a.values()) for a in big_dictionary.values()]:
-    #     values += lista
-    # for fasta_id in fasta_ids:
-    #     if fasta_id not in set(values):
-    #         tag += 1
-    #         if verb: print("Fasta sequence with ID %s was not found between PDB files."%fasta_id,file = sys.stderr)
-    # if tag>4:
-    #     raise SystemExit("Program stopped due to missing sequences.")
-    # return big_dictionary
+    return my_dic
